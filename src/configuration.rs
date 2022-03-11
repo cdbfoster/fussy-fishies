@@ -24,7 +24,11 @@ pub const LOGICAL_WIDTH: f32 = 1920.0;
 pub const LOGICAL_HEIGHT: f32 = 1080.0;
 pub const LOGICAL_ASPECT: f32 = 16.0 / 9.0;
 
-fn adjust_projections(mut query: Query<&mut OrthographicProjection>, windows: Res<Windows>, mut resized: EventReader<WindowResized>) {
+fn adjust_projections(
+    mut query: Query<&mut OrthographicProjection>,
+    windows: Res<Windows>,
+    mut resized: EventReader<WindowResized>,
+) {
     for resized_event in resized.iter() {
         let window = windows.get(resized_event.id).expect("cannot get window");
 
