@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::render::camera::{ScalingMode, WindowOrigin};
 
 mod animation;
 mod configuration;
@@ -30,7 +31,18 @@ enum State {
     Game,
 }
 
-fn setup(mut player_config: ResMut<PlayerConfiguration>) {
+fn setup(mut commands: Commands, mut player_config: ResMut<PlayerConfiguration>) {
+    commands.spawn_bundle(OrthographicCameraBundle {
+        orthographic_projection: OrthographicProjection {
+            window_origin: WindowOrigin::BottomLeft,
+            scaling_mode: ScalingMode::None,
+            ..Default::default()
+        },
+        transform: Transform::from_translation(Vec3::new(0.0, 0.0, 500.0))
+            .looking_at(Vec3::ZERO, Vec3::new(0.0, 1.0, 0.0)),
+        ..OrthographicCameraBundle::new_2d()
+    });
+
     const DEFAULT_PLAYER_KEY_MAPS: [KeyMap; 4] = [
         KeyMap {
             forward: KeyCode::W,
