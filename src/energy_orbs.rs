@@ -49,11 +49,13 @@ fn spawn_starting_orbs(mut commands: Commands, asset_server: Res<AssetServer>) {
                 texture: asset_server.load("images/orb.png"),
                 transform: Transform::from_scale(Vec3::splat(ORB_SCALE))
                     .with_translation(Vec3::new(x, y, 0.0)),
+                visibility: Visibility { is_visible: false },
                 ..Default::default()
             })
             .insert(CollisionCircle {
                 radius: 64.0 * ORB_SCALE,
-            });
+            })
+            .insert(RespawnTimer(Timer::from_seconds(1.0, false)));
     }
 }
 
