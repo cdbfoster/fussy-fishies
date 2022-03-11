@@ -1,0 +1,15 @@
+[package]
+name = "fishies"
+version = "0.1.0"
+license = "GPL-3.0-or-later"
+edition = "2021"
+
+[dependencies]
+bevy = "0.6"
+
+[features]
+default = ["fast-build"]
+fast-build = ["bevy/dynamic"]
+
+[profile.dev]
+opt-level = 3
