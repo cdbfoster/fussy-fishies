@@ -1278,13 +1278,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fishies"
-version = "0.1.0"
-dependencies = [
- "bevy",
-]
-
-[[package]]
 name = "fixedbitset"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1318,6 +1311,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "76ee7a02da4d231650c7cea31349b889be2f45ddb3ef3032d2ec8185f6313fd2"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "fussy-fishies"
+version = "0.1.0"
+dependencies = [
+ "bevy",
 ]
 
 [[package]]
