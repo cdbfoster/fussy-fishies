@@ -26,6 +26,9 @@ pub struct Originator(pub Entity);
 #[derive(Clone, Component)]
 pub struct Projectile;
 
+#[derive(Clone, Component)]
+pub struct Shield;
+
 #[derive(Clone, Component, Default)]
 pub struct Shielded;
 

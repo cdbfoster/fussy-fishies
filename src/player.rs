@@ -9,7 +9,7 @@ use crate::animation::{Animation, AnimationStage};
 use crate::configuration::{LOGICAL_HEIGHT, LOGICAL_WIDTH};
 use crate::core_components::{
     AngularVelocity, CollisionCircle, Dead, Energy, HitPoints, Lives, Originator, Projectile,
-    Shielded, Velocity,
+    Shield, Shielded, Velocity,
 };
 use crate::State;
 
@@ -250,23 +250,32 @@ fn gather_player_input(
 fn deshield_players(
     mut commands: Commands,
     mut player_input: EventReader<PlayerInput>,
-    query: Query<(Entity, Option<&Shielded>), With<Player>>,
+    players: Query<(Entity, Option<&Shielded>, &Children), With<Player>>,
+    shields: Query<Entity, With<Shield>>,
 ) {
-    let mut shielded_players = query
+    let mut shielded_players = players
         .iter()
-        .filter_map(|(e, s)| s.and(Some(e)))
+        .filter_map(|(e, s, c)| s.and(Some((e, c))))
         .collect::<Vec<_>>();
 
     for input in player_input.iter() {
         if let PlayerInput::Shield(player) = input {
-            if let Some(found) = shielded_players.iter().position(|p| p == player) {
+            if let Some(found) = shielded_players.iter().position(|p| p.0 == *player) {
                 shielded_players.remove(found);
             }
         }
     }
 
-    for player in shielded_players {
+    for (player, children) in shielded_players {
         commands.entity(player).remove::<Shielded>();
+
+        let shield = children
+            .iter()
+            .copied()
+            .find(|c| shields.get(*c).is_ok())
+            .expect("cannot find shield entity");
+
+        commands.entity(shield).despawn_recursive();
     }
 }
 
@@ -274,7 +283,7 @@ fn handle_player_input(
     mut commands: Commands,
     time: Res<Time>,
     mut player_input: EventReader<PlayerInput>,
-    mut query: Query<
+    mut players: Query<
         (
             Entity,
             &mut Velocity,
@@ -282,9 +291,11 @@ fn handle_player_input(
             &mut Energy,
             &Transform,
             Option<&Shielded>,
+            &Children,
         ),
         With<Player>,
     >,
+    shields: Query<Entity, With<Shield>>,
     asset_server: Res<AssetServer>,
 ) {
     const PLAYER_ACCELERATION: f32 = 0.3;
@@ -292,8 +303,8 @@ fn handle_player_input(
 
     for input in player_input.iter() {
         let player = input.player();
-        let (entity, mut velocity, mut angular_velocity, mut energy, transform, shielded) =
-            query.get_mut(player).expect("cannot find player entity");
+        let (entity, mut velocity, mut angular_velocity, mut energy, transform, shielded, children) =
+            players.get_mut(player).expect("cannot find player entity");
 
         match input {
             PlayerInput::Move(_) => {
@@ -314,6 +325,9 @@ fn handle_player_input(
                 entity,
                 &mut energy.0,
                 shielded.is_some(),
+                children,
+                &shields,
+                &asset_server,
             ),
             PlayerInput::Shoot(_) => handle_player_shooting(
                 &mut commands,
@@ -334,18 +348,45 @@ fn handle_player_shielding(
     entity: Entity,
     energy: &mut f32,
     shielded: bool,
+    children: &Children,
+    shields: &Query<Entity, With<Shield>>,
+    asset_server: &Res<AssetServer>,
 ) {
-    const SHIELD_DRAIN_RATE: f32 = 1.0;
+    const SHIELD_DRAIN_RATE: f32 = 2.0;
 
     if shielded {
         *energy -= time.delta_seconds() * SHIELD_DRAIN_RATE;
         if *energy <= 0.0 {
             *energy = 0.0;
             commands.entity(entity).remove::<Shielded>();
+
+            let shield = children
+                .iter()
+                .copied()
+                .find(|c| shields.get(*c).is_ok())
+                .expect("cannot find shield entity");
+
+            commands.entity(shield).despawn_recursive();
         }
         println!("Player {:?} energy: {}", entity, *energy);
     } else if *energy > 0.0 {
-        commands.entity(entity).insert(Shielded);
+        commands
+            .entity(entity)
+            .insert(Shielded)
+            .with_children(|player| {
+                player
+                    .spawn_bundle(SpriteBundle {
+                        texture: asset_server.load("images/shield.png"),
+                        transform: Transform::from_scale(Vec3::splat(PLAYER_SHIELD_SCALE))
+                            .with_translation(Vec3::new(0.0, 0.0, 5.0)),
+                        sprite: Sprite {
+                            color: Color::rgba(1.0, 1.0, 1.0, 0.1),
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    })
+                    .insert(Shield);
+            });
     }
 }
 
