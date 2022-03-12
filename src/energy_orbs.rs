@@ -3,8 +3,8 @@ use std::time::Duration;
 use bevy::prelude::*;
 
 use crate::configuration::{LOGICAL_HEIGHT, LOGICAL_WIDTH};
-use crate::core_components::{CollisionCircle, Energy};
-use crate::player::{Player, PLAYER_SCALE};
+use crate::core_components::{CollisionCircle, Energy, Shielded};
+use crate::player::{Player, PLAYER_SCALE, PLAYER_SHIELD_SCALE};
 use crate::State;
 
 pub struct EnergyOrbsPlugin;
@@ -125,19 +125,32 @@ fn respawn_orbs(
 }
 
 fn change_player_size(
-    //mut commands: Commands,
-    mut players: Query<(&mut Transform, &mut CollisionCircle, &Energy), With<Player>>,
+    mut players: Query<
+        (
+            &mut Transform,
+            &mut CollisionCircle,
+            &Energy,
+            Option<&Shielded>,
+        ),
+        With<Player>,
+    >,
 ) {
     const ENERGY_SCALE_MULTIPLIER: f32 = 1.06;
 
-    for (mut transform, mut collision_circle, energy) in players.iter_mut() {
-        let target_scale_factor = PLAYER_SCALE * ENERGY_SCALE_MULTIPLIER.powf(energy.0.max(1.0));
+    for (mut transform, mut collision_circle, energy, shielded) in players.iter_mut() {
+        let target_scale_factor = PLAYER_SCALE * ENERGY_SCALE_MULTIPLIER.powf(energy.0);
         let next_scale_factor =
             transform.scale.z + (target_scale_factor - transform.scale.z) * 0.05;
 
         let base_scale = transform.scale / transform.scale.z;
         transform.scale = base_scale * next_scale_factor;
 
-        collision_circle.radius = 128.0 * next_scale_factor;
+        let shield_target_size = if shielded.is_some() {
+            target_scale_factor * PLAYER_SHIELD_SCALE * 128.0
+        } else {
+            target_scale_factor * 128.0
+        };
+
+        collision_circle.radius += (shield_target_size - collision_circle.radius) * 0.10;
     }
 }

@@ -123,6 +123,7 @@ impl PlayerInput {
 }
 
 pub const PLAYER_SCALE: f32 = 0.4;
+pub const PLAYER_SHIELD_SCALE: f32 = 1.2;
 
 fn create_players(
     mut commands: Commands,
