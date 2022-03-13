@@ -1,3 +1,4 @@
+#![allow(clippy::too_many_arguments)]
 #![allow(clippy::type_complexity)]
 
 use std::f32::consts::PI;
@@ -11,6 +12,7 @@ use crate::core_components::{
     AngularVelocity, CollisionCircle, Dead, Energy, HitPoints, Lives, Originator, Projectile,
     Shield, Shielded, Velocity,
 };
+use crate::energy_orbs::{EnergyOrb, RespawnTimer as EnergyOrbRespawnTimer};
 use crate::State;
 
 pub struct PlayerPlugin;
@@ -51,6 +53,7 @@ impl Plugin for PlayerPlugin {
                             .after("move_projectiles"),
                     )
                     .with_system(animate_swimming.after("move_players"))
+                    .with_system(animate_eyes)
                     .with_system(dying),
             );
     }
@@ -100,6 +103,8 @@ enum BodyPart {
     Tail,
     RightFin,
     LeftFin,
+    RightEye,
+    LeftEye,
 }
 
 enum PlayerInput {
@@ -190,6 +195,39 @@ fn create_players(
                         ..Default::default()
                     })
                     .insert(BodyPart::LeftFin);
+
+                    head.spawn_bundle(SpriteBundle {
+                        texture: asset_server.load("images/player/eye-open.png"),
+                        transform: Transform::from_translation(Vec3::new(85.0, 62.0, 1.0)),
+                        sprite: Sprite {
+                            color: player.color.0,
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    })
+                    .insert(BodyPart::RightEye);
+
+                    head.spawn_bundle(SpriteBundle {
+                        texture: asset_server.load("images/player/eye-open.png"),
+                        transform: Transform::from_translation(Vec3::new(-85.0, 62.0, 1.0)),
+                        sprite: Sprite {
+                            color: player.color.0,
+                            flip_x: true,
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    })
+                    .insert(BodyPart::LeftEye);
+
+                    head.spawn_bundle(SpriteBundle {
+                        texture: asset_server.load("images/player/mouth.png"),
+                        transform: Transform::from_translation(Vec3::new(0.0, 100.0, 1.0)),
+                        sprite: Sprite {
+                            color: player.color.0,
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    });
                 });
 
                 root.spawn_bundle(SpriteBundle {
@@ -587,28 +625,6 @@ fn detect_projectile_hits(
     }
 }
 
-/*
-#[derive(Component)]
-struct AnimationTimer(Timer);
-
-fn test_animation(
-    time: Res<Time>,
-    mut query: Query<(&mut Transform, &mut AnimationTimer), With<Player>>,
-) {
-    let animation = Animation::new([
-        AnimationStage::new(0.0..0.5, &|t| t, &|t, mut x: Mut<Transform>| {
-            x.scale *= 1.01
-        }),
-        AnimationStage::new(0.5..1.0, &|t| t, &|t, mut x| x.scale *= 0.99009901),
-    ]);
-
-    for (transform, mut timer) in query.iter_mut() {
-        timer.0.tick(Duration::from_secs_f32(time.delta_seconds()));
-        animation.run(timer.0.percent(), transform);
-    }
-}
-*/
-
 #[derive(Component)]
 struct SwimmingAnimation(Timer);
 
@@ -724,5 +740,88 @@ fn animate_swimming(
 
         fin_animation(BodyPart::RightFin, animation_strength, 1.0);
         fin_animation(BodyPart::LeftFin, -animation_strength, -1.0);
+    }
+}
+
+fn animate_eyes(
+    players: Query<
+        (Entity, &Transform, &Children),
+        (With<Player>, Without<BodyPart>, Without<Dead>),
+    >,
+    orbs: Query<&EnergyOrb, Without<EnergyOrbRespawnTimer>>,
+    mut body_parts: Query<(
+        &mut Transform,
+        &GlobalTransform,
+        &BodyPart,
+        Option<&Children>,
+    )>,
+) {
+    const FIELD_OF_VIEW: f32 = PI / 4.0;
+    const LOOK_SPEED: f32 = 0.2;
+
+    for (entity, transform, children) in players.iter() {
+        let look = (transform.rotation * Vec3::new(0.0, 1.0, 0.0)).truncate();
+
+        let target = players
+            .iter()
+            .filter(|(e, _, _)| *e != entity)
+            .map(|(_, t, _)| t.translation.truncate())
+            .chain(orbs.iter().map(|o| o.0))
+            .map(|p| {
+                let view_vector = p - transform.translation.truncate();
+                (
+                    look.angle_between(view_vector).abs(),
+                    view_vector.length(),
+                    p,
+                )
+            })
+            .filter(|(a, _, _)| *a <= FIELD_OF_VIEW)
+            .min_by(|(_, d, _), (_, e, _)| d.partial_cmp(e).unwrap())
+            .map(|(_, _, p)| p);
+
+        let head_entity = children
+            .iter()
+            .find(|c| {
+                body_parts
+                    .get_component::<BodyPart>(**c)
+                    .ok()
+                    .filter(|b| **b == BodyPart::Head)
+                    .is_some()
+            })
+            .cloned()
+            .unwrap();
+
+        let head_children = body_parts
+            .get_component::<Children>(head_entity)
+            .expect("cannot find head entity")
+            .clone();
+
+        let mut look_at = |pos: Option<Vec2>, part| {
+            let entity = head_children
+                .iter()
+                .find(|c| {
+                    body_parts
+                        .get_component::<BodyPart>(**c)
+                        .ok()
+                        .filter(|b| **b == part)
+                        .is_some()
+                })
+                .cloned()
+                .unwrap();
+
+            let (mut t, gt, _, _) = body_parts.get_mut(entity).expect("cannot find entity");
+
+            let target_rotation = if let Some(pos) = pos {
+                let vector = pos - gt.translation.truncate();
+                Quat::from_rotation_z(look.angle_between(vector))
+            } else {
+                Quat::from_rotation_z(0.0)
+            };
+
+            t.rotation = t.rotation.slerp(target_rotation, LOOK_SPEED);
+        };
+
+        look_at(target, BodyPart::RightEye);
+        look_at(target, BodyPart::LeftEye);
     }
 }

@@ -22,10 +22,10 @@ impl Plugin for EnergyOrbsPlugin {
 }
 
 #[derive(Clone, Component)]
-struct EnergyOrb(Vec2);
+pub struct EnergyOrb(pub Vec2);
 
 #[derive(Component)]
-struct RespawnTimer(Timer);
+pub struct RespawnTimer(Timer);
 
 const ORB_POSITIONS: [(f32, f32); 8] = [
     (LOGICAL_WIDTH * 0.45, LOGICAL_HEIGHT * 0.575),
