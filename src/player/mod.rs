@@ -15,6 +15,10 @@ use crate::core_components::{
 use crate::energy_orbs::{EnergyOrb, RespawnTimer as EnergyOrbRespawnTimer};
 use crate::State;
 
+use self::model::{build_model, BodyPart};
+
+mod model;
+
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
@@ -96,17 +100,6 @@ struct PlayerObjectBundle {
     energy: Energy,
 }
 
-#[derive(Clone, Component, Copy, PartialEq)]
-enum BodyPart {
-    Head,
-    Body,
-    Tail,
-    RightFin,
-    LeftFin,
-    RightEye,
-    LeftEye,
-}
-
 enum PlayerInput {
     Move(Entity),
     Left(Entity),
@@ -144,130 +137,25 @@ fn create_players(
 
     const PLAYER_START_ANGLES: [f32; 4] = [PI / 4.0, -PI / 4.0, 3.0 * PI / 4.0, -3.0 * PI / 4.0];
 
-    for (i, player) in player_config.0.iter().cloned().flatten().enumerate() {
-        commands
-            .spawn()
+    for (i, player_configuration) in player_config.0.iter().cloned().flatten().enumerate() {
+        let mut player = commands.spawn();
+
+        player
             .insert(Player)
-            .insert_bundle(SpriteBundle {
-                texture: asset_server.load("images/player/root.png"),
-                transform: Transform::from_scale(Vec3::splat(PLAYER_SCALE))
-                    .with_translation(Vec3::new(
-                        PLAYER_START_POSITIONS[i].0,
-                        PLAYER_START_POSITIONS[i].1,
-                        1.0,
-                    ))
-                    .with_rotation(Quat::from_rotation_z(PLAYER_START_ANGLES[i])),
-                ..Default::default()
-            })
-            .with_children(|root| {
-                root.spawn_bundle(SpriteBundle {
-                    texture: asset_server.load("images/player/head.png"),
-                    transform: Transform::from_translation(Vec3::new(0.0, 20.0, 1.0)),
-                    sprite: Sprite {
-                        color: player.color.0,
-                        ..Default::default()
-                    },
-                    ..Default::default()
-                })
-                .insert(BodyPart::Head)
-                .with_children(|head| {
-                    head.spawn_bundle(SpriteBundle {
-                        texture: asset_server.load("images/player/fin.png"),
-                        transform: Transform::from_translation(Vec3::new(115.0, 0.0, 1.0))
-                            .with_rotation(Quat::from_rotation_z(0.375)),
-                        sprite: Sprite {
-                            color: player.color.0,
-                            ..Default::default()
-                        },
-                        ..Default::default()
-                    })
-                    .insert(BodyPart::RightFin);
-
-                    head.spawn_bundle(SpriteBundle {
-                        texture: asset_server.load("images/player/fin.png"),
-                        transform: Transform::from_translation(Vec3::new(-115.0, 0.0, 1.0))
-                            .with_rotation(Quat::from_rotation_z(-0.375)),
-                        sprite: Sprite {
-                            color: player.color.0,
-                            flip_x: true,
-                            ..Default::default()
-                        },
-                        ..Default::default()
-                    })
-                    .insert(BodyPart::LeftFin);
-
-                    head.spawn_bundle(SpriteBundle {
-                        texture: asset_server.load("images/player/eye-open.png"),
-                        transform: Transform::from_translation(Vec3::new(85.0, 62.0, 1.0)),
-                        sprite: Sprite {
-                            color: player.color.0,
-                            ..Default::default()
-                        },
-                        ..Default::default()
-                    })
-                    .insert(BodyPart::RightEye);
-
-                    head.spawn_bundle(SpriteBundle {
-                        texture: asset_server.load("images/player/eye-open.png"),
-                        transform: Transform::from_translation(Vec3::new(-85.0, 62.0, 1.0)),
-                        sprite: Sprite {
-                            color: player.color.0,
-                            flip_x: true,
-                            ..Default::default()
-                        },
-                        ..Default::default()
-                    })
-                    .insert(BodyPart::LeftEye);
-
-                    head.spawn_bundle(SpriteBundle {
-                        texture: asset_server.load("images/player/mouth.png"),
-                        transform: Transform::from_translation(Vec3::new(0.0, 100.0, 1.0)),
-                        sprite: Sprite {
-                            color: player.color.0,
-                            ..Default::default()
-                        },
-                        ..Default::default()
-                    });
-
-                    head.spawn_bundle(SpriteBundle {
-                        texture: asset_server.load("images/player/dorsal_fin.png"),
-                        transform: Transform::from_translation(Vec3::new(0.0, 0.0, 2.0)),
-                        sprite: Sprite {
-                            color: player.color.0,
-                            ..Default::default()
-                        },
-                        ..Default::default()
-                    });
-                });
-
-                root.spawn_bundle(SpriteBundle {
-                    texture: asset_server.load("images/player/body.png"),
-                    transform: Transform::from_translation(Vec3::new(0.0, -60.0, 2.0)),
-                    sprite: Sprite {
-                        color: player.color.0,
-                        ..Default::default()
-                    },
-                    ..Default::default()
-                })
-                .insert(BodyPart::Body);
-
-                root.spawn_bundle(SpriteBundle {
-                    texture: asset_server.load("images/player/tail.png"),
-                    transform: Transform::from_translation(Vec3::new(0.0, -105.0, 3.0)),
-                    sprite: Sprite {
-                        color: player.color.0,
-                        ..Default::default()
-                    },
-                    ..Default::default()
-                })
-                .insert(BodyPart::Tail);
-            })
-            .insert_bundle(player)
+            .insert_bundle(player_configuration.clone())
             .insert_bundle(PlayerObjectBundle::default())
             .insert(CollisionCircle {
                 radius: 128.0 * PLAYER_SCALE,
             })
             .insert(SwimmingAnimation(Timer::from_seconds(0.333, true)));
+
+        build_model(
+            &mut player,
+            &asset_server,
+            Vec2::new(PLAYER_START_POSITIONS[i].0, PLAYER_START_POSITIONS[i].1),
+            Quat::from_rotation_z(PLAYER_START_ANGLES[i]),
+            player_configuration.color.0,
+        );
     }
 }
 
