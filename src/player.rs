@@ -228,6 +228,16 @@ fn create_players(
                         },
                         ..Default::default()
                     });
+
+                    head.spawn_bundle(SpriteBundle {
+                        texture: asset_server.load("images/player/dorsal_fin.png"),
+                        transform: Transform::from_translation(Vec3::new(0.0, 0.0, 2.0)),
+                        sprite: Sprite {
+                            color: player.color.0,
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    });
                 });
 
                 root.spawn_bundle(SpriteBundle {
