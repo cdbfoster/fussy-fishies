@@ -2,11 +2,13 @@ use bevy::prelude::*;
 use bevy::render::camera::{ScalingMode, WindowOrigin};
 
 mod animation;
+mod background;
 mod configuration;
 mod core_components;
 mod energy_orbs;
 mod player;
 
+use self::background::BackgroundPlugin;
 use self::configuration::ConfigurationPlugin;
 use self::core_components::{HitPoints, Lives};
 use self::energy_orbs::EnergyOrbsPlugin;
@@ -18,6 +20,7 @@ fn main() {
     App::new()
         .add_plugin(ConfigurationPlugin)
         .add_plugins(DefaultPlugins)
+        .add_plugin(BackgroundPlugin)
         .add_plugin(PlayerPlugin)
         .add_plugin(EnergyOrbsPlugin)
         .add_state(State::Game)
@@ -71,10 +74,10 @@ fn setup(mut commands: Commands, mut player_config: ResMut<PlayerConfiguration>)
     ];
 
     const DEFAULT_PLAYER_COLORS: [Color; 4] = [
-        Color::rgb(1.0, 0.8, 0.8),
-        Color::rgb(0.8, 0.8, 1.0),
-        Color::rgb(0.8, 1.0, 0.8),
-        Color::rgb(1.0, 1.0, 0.8),
+        Color::rgb(1.0, 0.65, 0.65),
+        Color::rgb(0.85, 0.65, 1.0),
+        Color::rgb(0.65, 0.9, 0.65),
+        Color::rgb(1.0, 1.0, 0.65),
     ];
 
     for (i, player) in player_config.0.iter_mut().enumerate().take(4) {
