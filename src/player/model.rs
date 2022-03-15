@@ -1,7 +1,7 @@
 use bevy::ecs::system::EntityCommands;
 use bevy::prelude::*;
 
-use super::PLAYER_SCALE;
+pub const PLAYER_SCALE: f32 = 0.4;
 
 #[derive(Clone, Component, Copy, PartialEq)]
 pub(super) enum BodyPart {

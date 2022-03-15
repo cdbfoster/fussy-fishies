@@ -96,7 +96,6 @@ fn player_pickup(
 fn respawn_orbs(
     mut commands: Commands,
     time: Res<Time>,
-    players: Query<(&Transform, &CollisionCircle), With<Player>>,
     mut orbs: Query<(
         Entity,
         &mut Visibility,
@@ -104,6 +103,7 @@ fn respawn_orbs(
         &EnergyOrb,
         &CollisionCircle,
     )>,
+    players: Query<(&Transform, &CollisionCircle), With<Player>>,
 ) {
     for (orb_entity, mut orb_visibility, mut respawn_timer, orb, orb_collision) in orbs.iter_mut() {
         respawn_timer
