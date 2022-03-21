@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use bevy::window::{WindowMode, WindowResized};
 
+use crate::render::cameras::MainCamera;
+
 pub struct ConfigurationPlugin;
 
 impl Plugin for ConfigurationPlugin {
@@ -20,30 +22,36 @@ impl Plugin for ConfigurationPlugin {
     }
 }
 
-pub const LOGICAL_WIDTH: f32 = 1920.0;
-pub const LOGICAL_HEIGHT: f32 = 1080.0;
+pub const LOGICAL_WIDTH: u32 = 1920;
+pub const LOGICAL_HEIGHT: u32 = 1080;
 pub const LOGICAL_ASPECT: f32 = 16.0 / 9.0;
 
 fn adjust_projections(
-    mut query: Query<&mut OrthographicProjection>,
+    mut query: Query<&mut OrthographicProjection, With<MainCamera>>,
     windows: Res<Windows>,
     mut resized: EventReader<WindowResized>,
 ) {
     for resized_event in resized.iter() {
         let window = windows.get(resized_event.id).expect("cannot get window");
 
-        let (width, height) = (window.width(), window.height());
+        let (width, height) = (
+            window.physical_width() as f32,
+            window.physical_height() as f32,
+        );
 
         let (size_x, size_y) = if width >= height * LOGICAL_ASPECT {
-            (LOGICAL_HEIGHT * width / height, LOGICAL_HEIGHT)
+            (
+                LOGICAL_HEIGHT as f32 * width / height,
+                LOGICAL_HEIGHT as f32,
+            )
         } else {
-            (LOGICAL_WIDTH, LOGICAL_WIDTH * height / width)
+            (LOGICAL_WIDTH as f32, LOGICAL_WIDTH as f32 * height / width)
         };
 
         let (offset_x, offset_y) = if width >= height * LOGICAL_ASPECT {
-            ((LOGICAL_WIDTH - size_x) / 2.0, 0.0)
+            ((LOGICAL_WIDTH as f32 - size_x) / 2.0, 0.0)
         } else {
-            (0.0, (LOGICAL_HEIGHT - size_y) / 2.0)
+            (0.0, (LOGICAL_HEIGHT as f32 - size_y) / 2.0)
         };
 
         for mut projection in query.iter_mut() {

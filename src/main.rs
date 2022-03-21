@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy::render::camera::{ScalingMode, WindowOrigin};
+use bevy::render::view::RenderLayers;
 
 mod animation;
 mod background;
@@ -7,14 +7,18 @@ mod configuration;
 mod core_components;
 mod energy_orbs;
 mod player;
+mod render;
 
 use self::background::BackgroundPlugin;
 use self::configuration::ConfigurationPlugin;
+use self::configuration::{LOGICAL_HEIGHT, LOGICAL_WIDTH};
 use self::core_components::{HitPoints, Lives};
 use self::energy_orbs::EnergyOrbsPlugin;
 use self::player::{
     KeyMap, PlayerColor, PlayerConfiguration, PlayerConfigurationBundle, PlayerPlugin,
 };
+use self::render::cameras::setup_cameras;
+use self::render::foreground_pass::{ForegroundPassPlugin, FOREGROUND_COLOR_TEXTURE};
 
 fn main() {
     App::new()
@@ -23,7 +27,9 @@ fn main() {
         .add_plugin(BackgroundPlugin)
         .add_plugin(PlayerPlugin)
         .add_plugin(EnergyOrbsPlugin)
+        .add_plugin(ForegroundPassPlugin)
         .add_state(State::Game)
+        .add_startup_system(setup_cameras)
         .add_startup_system(setup)
         .run();
 }
@@ -34,17 +40,22 @@ enum State {
     Game,
 }
 
-fn setup(mut commands: Commands, mut player_config: ResMut<PlayerConfiguration>) {
-    commands.spawn_bundle(OrthographicCameraBundle {
-        orthographic_projection: OrthographicProjection {
-            window_origin: WindowOrigin::BottomLeft,
-            scaling_mode: ScalingMode::None,
+fn setup(
+    mut commands: Commands,
+    mut player_config: ResMut<PlayerConfiguration>,
+    images: Res<Assets<Image>>,
+) {
+    commands
+        .spawn_bundle(SpriteBundle {
+            texture: images.get_handle(FOREGROUND_COLOR_TEXTURE),
+            transform: Transform::from_translation(Vec3::new(
+                LOGICAL_WIDTH as f32 / 2.0,
+                LOGICAL_HEIGHT as f32 / 2.0,
+                0.0,
+            )),
             ..Default::default()
-        },
-        transform: Transform::from_translation(Vec3::new(0.0, 0.0, 500.0))
-            .looking_at(Vec3::ZERO, Vec3::new(0.0, 1.0, 0.0)),
-        ..OrthographicCameraBundle::new_2d()
-    });
+        })
+        .insert(RenderLayers::layer(1));
 
     const DEFAULT_PLAYER_KEY_MAPS: [KeyMap; 4] = [
         KeyMap {

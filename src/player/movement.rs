@@ -112,14 +112,16 @@ pub(super) fn handle_collision(
 
         // Collide players against walls
         for (_, mut velocity, mut transform, collision) in players.iter_mut() {
-            if transform.translation.x + collision.radius > LOGICAL_WIDTH {
-                transform.translation.x = LOGICAL_WIDTH - collision.radius - COLLISION_MARGIN;
+            if transform.translation.x + collision.radius > LOGICAL_WIDTH as f32 {
+                transform.translation.x =
+                    LOGICAL_WIDTH as f32 - collision.radius - COLLISION_MARGIN;
                 velocity.0 = Vec2::new(0.0, Vec2::new(0.0, 1.0).dot(velocity.0));
                 found_collision = true;
             }
 
-            if transform.translation.y + collision.radius > LOGICAL_HEIGHT {
-                transform.translation.y = LOGICAL_HEIGHT - collision.radius - COLLISION_MARGIN;
+            if transform.translation.y + collision.radius > LOGICAL_HEIGHT as f32 {
+                transform.translation.y =
+                    LOGICAL_HEIGHT as f32 - collision.radius - COLLISION_MARGIN;
                 velocity.0 = Vec2::new(Vec2::new(1.0, 0.0).dot(velocity.0), 0.0);
                 found_collision = true;
             }

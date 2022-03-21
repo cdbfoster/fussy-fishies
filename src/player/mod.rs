@@ -105,10 +105,10 @@ fn create_players(
     asset_server: Res<AssetServer>,
 ) {
     const PLAYER_START_POSITIONS: [(f32, f32); 4] = [
-        (LOGICAL_WIDTH * 0.35, LOGICAL_HEIGHT * 0.70),
-        (LOGICAL_WIDTH * 0.65, LOGICAL_HEIGHT * 0.70),
-        (LOGICAL_WIDTH * 0.35, LOGICAL_HEIGHT * 0.30),
-        (LOGICAL_WIDTH * 0.65, LOGICAL_HEIGHT * 0.30),
+        (LOGICAL_WIDTH as f32 * 0.35, LOGICAL_HEIGHT as f32 * 0.70),
+        (LOGICAL_WIDTH as f32 * 0.65, LOGICAL_HEIGHT as f32 * 0.70),
+        (LOGICAL_WIDTH as f32 * 0.35, LOGICAL_HEIGHT as f32 * 0.30),
+        (LOGICAL_WIDTH as f32 * 0.65, LOGICAL_HEIGHT as f32 * 0.30),
     ];
 
     const PLAYER_START_ANGLES: [f32; 4] = [PI / 4.0, -PI / 4.0, 3.0 * PI / 4.0, -3.0 * PI / 4.0];

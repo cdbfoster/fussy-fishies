@@ -5,7 +5,7 @@ license = "GPL-3.0-or-later"
 edition = "2021"
 
 [dependencies]
-bevy = "0.6"
+bevy = { git = "https://github.com/cdbfoster/bevy.git", branch = "fussy-fishies-fixes" }
 
 [features]
 default = ["fast-build"]
