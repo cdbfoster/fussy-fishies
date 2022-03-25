@@ -6,6 +6,7 @@ edition = "2021"
 
 [dependencies]
 bevy = { git = "https://github.com/cdbfoster/bevy.git", branch = "fussy-fishies-fixes" }
+rand = "0.8"
 
 [features]
 default = ["fast-build"]
