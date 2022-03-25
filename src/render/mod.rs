@@ -1,2 +1,2 @@
+pub mod additional_pass;
 pub mod cameras;
-pub mod foreground_pass;

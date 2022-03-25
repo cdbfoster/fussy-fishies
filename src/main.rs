@@ -17,8 +17,8 @@ use self::energy_orbs::EnergyOrbsPlugin;
 use self::player::{
     KeyMap, PlayerColor, PlayerConfiguration, PlayerConfigurationBundle, PlayerPlugin,
 };
-use self::render::cameras::setup_cameras;
-use self::render::foreground_pass::{ForegroundPassPlugin, FOREGROUND_COLOR_TEXTURE};
+use self::render::additional_pass::AdditionalPassPlugin;
+use self::render::cameras::{setup_cameras, ForegroundCamera, FOREGROUND_COLOR_TEXTURE};
 
 fn main() {
     App::new()
@@ -27,7 +27,9 @@ fn main() {
         .add_plugin(BackgroundPlugin)
         .add_plugin(PlayerPlugin)
         .add_plugin(EnergyOrbsPlugin)
-        .add_plugin(ForegroundPassPlugin)
+        .add_plugin(AdditionalPassPlugin::<ForegroundCamera>::new(
+            "foreground_pass",
+        ))
         .add_state(State::Game)
         .add_startup_system(setup_cameras)
         .add_startup_system(setup)

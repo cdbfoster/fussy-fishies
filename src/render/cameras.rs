@@ -1,6 +1,7 @@
 use bevy::core_pipeline::RenderTargetClearColors;
 use bevy::ecs::system::EntityCommands;
 use bevy::prelude::*;
+use bevy::reflect::TypeUuid;
 use bevy::render::camera::{RenderTarget, ScalingMode, WindowOrigin};
 use bevy::render::render_resource::{
     Extent3d, FilterMode, TextureDimension, TextureFormat, TextureUsages,
@@ -8,7 +9,6 @@ use bevy::render::render_resource::{
 use bevy::render::view::RenderLayers;
 
 use crate::configuration::{LOGICAL_HEIGHT, LOGICAL_WIDTH};
-use crate::render::foreground_pass::FOREGROUND_COLOR_TEXTURE;
 
 #[derive(Component, Default)]
 pub struct MainCamera;
@@ -31,6 +31,9 @@ pub fn spawn_main_camera<'w, 's, 'a>(
 
     camera
 }
+
+pub const FOREGROUND_COLOR_TEXTURE: HandleUntyped =
+    HandleUntyped::weak_from_u64(Image::TYPE_UUID, 0xDEADBEEF01);
 
 #[derive(Component, Default)]
 pub struct ForegroundCamera;

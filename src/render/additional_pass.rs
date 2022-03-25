@@ -1,59 +1,61 @@
+use std::marker::PhantomData;
+
 use bevy::core_pipeline::{self, draw_2d_graph, Transparent2d};
 use bevy::prelude::*;
-use bevy::reflect::TypeUuid;
 use bevy::render::camera::{ActiveCamera, CameraTypePlugin};
 use bevy::render::render_graph::{Node, NodeRunError, RenderGraph, RenderGraphContext, SlotValue};
 use bevy::render::render_phase::RenderPhase;
 use bevy::render::renderer::RenderContext;
 use bevy::render::{RenderApp, RenderStage};
 
-use crate::render::cameras::ForegroundCamera;
-
-pub const FOREGROUND_COLOR_TEXTURE: HandleUntyped =
-    HandleUntyped::weak_from_u64(Image::TYPE_UUID, 0xDEADBEEF);
-
 #[derive(Default)]
-pub struct ForegroundPassPlugin;
+pub struct AdditionalPassPlugin<T> {
+    pass_name: &'static str,
+    _marker: PhantomData<T>,
+}
 
-impl Plugin for ForegroundPassPlugin {
+impl<T> AdditionalPassPlugin<T> {
+    pub fn new(pass_name: &'static str) -> Self {
+        Self {
+            pass_name,
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<T: Component + Default> Plugin for AdditionalPassPlugin<T> {
     fn build(&self, app: &mut App) {
-        app.add_plugin(CameraTypePlugin::<ForegroundCamera>::default());
+        app.add_plugin(CameraTypePlugin::<T>::default());
 
         let render_app = app.sub_app_mut(RenderApp);
-        render_app.add_system_to_stage(RenderStage::Extract, extract_foreground_camera_phases);
+        render_app.add_system_to_stage(
+            RenderStage::Extract,
+            extract_additional_pass_camera_phases::<T>,
+        );
 
-        let foreground_pass_driver = ForegroundPassDriver::new(&mut render_app.world);
+        let additional_pass_driver = AdditionalPassDriver::<T>::new(&mut render_app.world);
 
         let mut graph = render_app.world.resource_mut::<RenderGraph>();
 
-        graph.add_node(node::FOREGROUND_PASS_DRIVER, foreground_pass_driver);
+        graph.add_node(self.pass_name, additional_pass_driver);
 
         graph
-            .add_node_edge(
-                core_pipeline::node::MAIN_PASS_DEPENDENCIES,
-                node::FOREGROUND_PASS_DRIVER,
-            )
+            .add_node_edge(core_pipeline::node::MAIN_PASS_DEPENDENCIES, self.pass_name)
             .expect("could not add node edge");
 
         graph
-            .add_node_edge(
-                core_pipeline::node::CLEAR_PASS_DRIVER,
-                node::FOREGROUND_PASS_DRIVER,
-            )
+            .add_node_edge(core_pipeline::node::CLEAR_PASS_DRIVER, self.pass_name)
             .expect("could not add node edge");
 
         graph
-            .add_node_edge(
-                node::FOREGROUND_PASS_DRIVER,
-                core_pipeline::node::MAIN_PASS_DRIVER,
-            )
+            .add_node_edge(self.pass_name, core_pipeline::node::MAIN_PASS_DRIVER)
             .expect("could not add node edge");
     }
 }
 
-fn extract_foreground_camera_phases(
+fn extract_additional_pass_camera_phases<T: Component>(
     mut commands: Commands,
-    active: Res<ActiveCamera<ForegroundCamera>>,
+    active: Res<ActiveCamera<T>>,
 ) {
     if let Some(entity) = active.get() {
         commands
@@ -62,15 +64,11 @@ fn extract_foreground_camera_phases(
     }
 }
 
-mod node {
-    pub const FOREGROUND_PASS_DRIVER: &str = "foreground_pass_driver";
+struct AdditionalPassDriver<T: Component> {
+    query: QueryState<Entity, With<T>>,
 }
 
-struct ForegroundPassDriver {
-    query: QueryState<Entity, With<ForegroundCamera>>,
-}
-
-impl ForegroundPassDriver {
+impl<T: Component> AdditionalPassDriver<T> {
     pub fn new(render_world: &mut World) -> Self {
         Self {
             query: QueryState::new(render_world),
@@ -78,7 +76,7 @@ impl ForegroundPassDriver {
     }
 }
 
-impl Node for ForegroundPassDriver {
+impl<T: Component> Node for AdditionalPassDriver<T> {
     fn update(&mut self, world: &mut World) {
         self.query.update_archetypes(world);
     }
