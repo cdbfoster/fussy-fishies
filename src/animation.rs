@@ -43,6 +43,7 @@ impl<'a, T> AnimationStage<'a, T> {
     }
 
     fn execute(&self, time: f32, input: T) {
-        (self.operation)((self.interpolation)(time), input)
+        let t = (time - self.range.start) / (self.range.end - self.range.start);
+        (self.operation)((self.interpolation)(t), input)
     }
 }
