@@ -11,13 +11,15 @@ use bevy::render::{RenderApp, RenderStage};
 #[derive(Default)]
 pub struct AdditionalPassPlugin<T> {
     pass_name: &'static str,
+    before_node: Option<&'static str>,
     _marker: PhantomData<T>,
 }
 
 impl<T> AdditionalPassPlugin<T> {
-    pub fn new(pass_name: &'static str) -> Self {
+    pub fn new(pass_name: &'static str, before_node: Option<&'static str>) -> Self {
         Self {
             pass_name,
+            before_node,
             _marker: PhantomData,
         }
     }
@@ -46,6 +48,12 @@ impl<T: Component + Default> Plugin for AdditionalPassPlugin<T> {
         graph
             .add_node_edge(core_pipeline::node::CLEAR_PASS_DRIVER, self.pass_name)
             .expect("could not add node edge");
+
+        if let Some(before_node) = self.before_node {
+            graph
+                .add_node_edge(self.pass_name, before_node)
+                .expect("could not add node edge");
+        }
 
         graph
             .add_node_edge(self.pass_name, core_pipeline::node::MAIN_PASS_DRIVER)

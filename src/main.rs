@@ -29,6 +29,7 @@ fn main() {
         .add_plugin(EnergyOrbsPlugin)
         .add_plugin(AdditionalPassPlugin::<ForegroundCamera>::new(
             "foreground_pass",
+            None,
         ))
         .add_state(State::Game)
         .add_startup_system(setup_cameras)
