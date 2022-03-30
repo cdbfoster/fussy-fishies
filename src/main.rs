@@ -1,14 +1,6 @@
 use bevy::prelude::*;
 use bevy::render::view::RenderLayers;
 
-mod animation;
-mod background;
-mod configuration;
-mod core_components;
-mod energy_orbs;
-mod player;
-mod render;
-
 use self::background::BackgroundPlugin;
 use self::configuration::ConfigurationPlugin;
 use self::configuration::{LOGICAL_HEIGHT, LOGICAL_WIDTH};
@@ -19,6 +11,14 @@ use self::player::{
 };
 use self::render::additional_pass::AdditionalPassPlugin;
 use self::render::cameras::{setup_cameras, ForegroundCamera, FOREGROUND_COLOR_TEXTURE};
+
+mod animation;
+mod background;
+mod configuration;
+mod core_components;
+mod energy_orbs;
+mod player;
+mod render;
 
 fn main() {
     App::new()
