@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy::render::view::RenderLayers;
 
 use self::background::BackgroundPlugin;
+use self::big_fish::BigFishPlugin;
 use self::configuration::ConfigurationPlugin;
 use self::configuration::{LOGICAL_HEIGHT, LOGICAL_WIDTH};
 use self::core_components::{HitPoints, Lives};
@@ -14,6 +15,7 @@ use self::render::cameras::{setup_cameras, ForegroundCamera, FOREGROUND_COLOR_TE
 
 mod animation;
 mod background;
+mod big_fish;
 mod configuration;
 mod core_components;
 mod energy_orbs;
@@ -31,6 +33,7 @@ fn main() {
             "foreground_pass",
             None,
         ))
+        .add_plugin(BigFishPlugin)
         .add_state(State::Game)
         .add_startup_system(setup_cameras)
         .add_startup_system(setup)
