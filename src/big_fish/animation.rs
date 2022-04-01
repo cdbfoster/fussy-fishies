@@ -11,7 +11,7 @@ pub(super) struct AnimationState {
     bobbing: Timer,
     breathing: Timer,
     swimming: Timer,
-    swim_speed: f32,
+    pub(super) swim_speed: f32,
 }
 
 impl Default for AnimationState {
