@@ -7,8 +7,9 @@ use crate::animation::{Animation, AnimationStage};
 use crate::core_components::{AngularVelocity, Dead, Velocity};
 use crate::energy_orbs::{EnergyOrb, RespawnTimer as EnergyOrbRespawnTimer};
 
+use super::model::BodyPart;
 use super::movement::{PLAYER_MAX_ANGULAR_VELOCITY, PLAYER_MAX_SPEED};
-use super::{BodyPart, Player};
+use super::Player;
 
 #[derive(Component)]
 pub(super) struct SwimmingAnimation(pub(super) Timer);

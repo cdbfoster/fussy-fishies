@@ -6,7 +6,7 @@ use bevy::prelude::*;
 
 use crate::configuration::{LOGICAL_HEIGHT, LOGICAL_WIDTH};
 use crate::core_components::{
-    AngularVelocity, CollisionCircle, Dead, Energy, HitPoints, Lives, Velocity,
+    AngularVelocity, CollisionCircle, Energy, HitPoints, Lives, Velocity,
 };
 use crate::State;
 
@@ -16,7 +16,7 @@ pub use self::shield::PLAYER_SHIELD_SCALE;
 
 use self::animation::{animate_eyes, animate_swimming, SwimmingAnimation};
 use self::input::{gather_player_input, Action};
-use self::model::{build_model, BodyPart};
+use self::model::build_model;
 use self::movement::{handle_collision, handle_movement, move_players};
 use self::projectiles::{handle_projectiles, handle_shooting};
 use self::shield::handle_shielding;
@@ -65,14 +65,8 @@ impl Plugin for PlayerPlugin {
                             .after("physics"),
                     )
                     .with_system(animate_eyes.label("animation").after("animate_swimming"))
-                    .with_system(dying.after("animation")),
+                    .with_system(hide_invisible_players),
             );
-    }
-}
-
-fn dying(mut commands: Commands, query: Query<Entity, Added<Dead>>) {
-    for dead in query.iter() {
-        commands.entity(dead).despawn_recursive();
     }
 }
 
@@ -132,5 +126,31 @@ fn create_players(
             Quat::from_rotation_z(PLAYER_START_ANGLES[i]),
             player_configuration.color.0,
         );
+    }
+}
+
+fn hide_invisible_players(
+    mut body_parts: Query<(&mut Visibility, Option<&Children>), Without<Player>>,
+    players: Query<(&Visibility, &Children), With<Player>>,
+) {
+    fn set_visibility(
+        visible: bool,
+        children: &Children,
+        body_parts: &mut Query<(&mut Visibility, Option<&Children>), Without<Player>>,
+    ) {
+        for child in children.iter() {
+            let (mut visibility, children) =
+                body_parts.get_mut(*child).expect("could not find child");
+
+            visibility.is_visible = visible;
+
+            if let Some(children) = children.cloned() {
+                set_visibility(visible, &children, body_parts);
+            }
+        }
+    }
+
+    for (visibility, children) in players.iter() {
+        set_visibility(visibility.is_visible, children, &mut body_parts);
     }
 }

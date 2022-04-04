@@ -27,17 +27,14 @@ pub(super) fn build_model(
             transform: Transform::from_scale(Vec3::splat(PLAYER_SCALE))
                 .with_translation(start_position.extend(1.0))
                 .with_rotation(start_rotation),
-            ..Default::default()
+            ..default()
         })
         .with_children(|root| {
             root.spawn_bundle(SpriteBundle {
                 texture: asset_server.load("images/player/head.png"),
                 transform: Transform::from_translation(Vec3::new(0.0, 20.0, 1.0)),
-                sprite: Sprite {
-                    color,
-                    ..Default::default()
-                },
-                ..Default::default()
+                sprite: Sprite { color, ..default() },
+                ..default()
             })
             .insert(BodyPart::Head)
             .with_children(|head| {
@@ -45,11 +42,8 @@ pub(super) fn build_model(
                     texture: asset_server.load("images/player/fin.png"),
                     transform: Transform::from_translation(Vec3::new(115.0, 0.0, 1.0))
                         .with_rotation(Quat::from_rotation_z(0.375)),
-                    sprite: Sprite {
-                        color,
-                        ..Default::default()
-                    },
-                    ..Default::default()
+                    sprite: Sprite { color, ..default() },
+                    ..default()
                 })
                 .insert(BodyPart::RightFin);
 
@@ -60,20 +54,17 @@ pub(super) fn build_model(
                     sprite: Sprite {
                         color,
                         flip_x: true,
-                        ..Default::default()
+                        ..default()
                     },
-                    ..Default::default()
+                    ..default()
                 })
                 .insert(BodyPart::LeftFin);
 
                 head.spawn_bundle(SpriteBundle {
                     texture: asset_server.load("images/player/eye-open.png"),
                     transform: Transform::from_translation(Vec3::new(85.0, 62.0, 1.0)),
-                    sprite: Sprite {
-                        color,
-                        ..Default::default()
-                    },
-                    ..Default::default()
+                    sprite: Sprite { color, ..default() },
+                    ..default()
                 })
                 .insert(BodyPart::RightEye);
 
@@ -83,52 +74,40 @@ pub(super) fn build_model(
                     sprite: Sprite {
                         color,
                         flip_x: true,
-                        ..Default::default()
+                        ..default()
                     },
-                    ..Default::default()
+                    ..default()
                 })
                 .insert(BodyPart::LeftEye);
 
                 head.spawn_bundle(SpriteBundle {
                     texture: asset_server.load("images/player/mouth.png"),
                     transform: Transform::from_translation(Vec3::new(0.0, 100.0, 1.0)),
-                    sprite: Sprite {
-                        color,
-                        ..Default::default()
-                    },
-                    ..Default::default()
+                    sprite: Sprite { color, ..default() },
+                    ..default()
                 });
 
                 head.spawn_bundle(SpriteBundle {
                     texture: asset_server.load("images/player/dorsal_fin.png"),
                     transform: Transform::from_translation(Vec3::new(0.0, 0.0, 2.0)),
-                    sprite: Sprite {
-                        color,
-                        ..Default::default()
-                    },
-                    ..Default::default()
+                    sprite: Sprite { color, ..default() },
+                    ..default()
                 });
             });
 
             root.spawn_bundle(SpriteBundle {
                 texture: asset_server.load("images/player/body.png"),
                 transform: Transform::from_translation(Vec3::new(0.0, -60.0, 2.0)),
-                sprite: Sprite {
-                    color,
-                    ..Default::default()
-                },
-                ..Default::default()
+                sprite: Sprite { color, ..default() },
+                ..default()
             })
             .insert(BodyPart::Body);
 
             root.spawn_bundle(SpriteBundle {
                 texture: asset_server.load("images/player/tail.png"),
                 transform: Transform::from_translation(Vec3::new(0.0, -105.0, 3.0)),
-                sprite: Sprite {
-                    color,
-                    ..Default::default()
-                },
-                ..Default::default()
+                sprite: Sprite { color, ..default() },
+                ..default()
             })
             .insert(BodyPart::Tail);
         });

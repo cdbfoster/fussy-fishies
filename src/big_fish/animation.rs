@@ -1,6 +1,8 @@
-use std::{f32::consts::PI, time::Duration};
+use std::f32::consts::PI;
+use std::time::Duration;
 
-use bevy::prelude::*;
+use bevy::ecs::query::WorldQuery;
+use bevy::{ecs::query::FilterFetch, prelude::*};
 
 use crate::animation::{Animation, AnimationStage};
 
@@ -12,6 +14,7 @@ pub(super) struct AnimationState {
     breathing: Timer,
     swimming: Timer,
     pub(super) swim_speed: f32,
+    pub(super) chomping: Timer,
 }
 
 impl Default for AnimationState {
@@ -21,6 +24,7 @@ impl Default for AnimationState {
             breathing: Timer::from_seconds(3.0, true),
             swimming: Timer::from_seconds(5.0, true),
             swim_speed: 1.0,
+            chomping: Timer::from_seconds(0.5, false),
         }
     }
 }
@@ -37,10 +41,14 @@ pub(super) fn reset_animation(mut body_parts: Query<(&mut Transform, &BodyPart)>
     }
 }
 
-fn get_body_part<'a>(
-    body_parts: &'a mut Query<(&mut Transform, &BodyPart)>,
+pub(super) fn get_body_part<'a, F>(
+    body_parts: &'a mut Query<(&mut Transform, &BodyPart), F>,
     part: BodyPart,
-) -> (Mut<'a, Transform>, &'a BodyPart) {
+) -> (Mut<'a, Transform>, &'a BodyPart)
+where
+    F: WorldQuery,
+    <F as WorldQuery>::Fetch: FilterFetch,
+{
     body_parts
         .iter_mut()
         .find(|(_, b)| **b == part)
