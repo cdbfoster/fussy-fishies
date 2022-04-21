@@ -14,7 +14,7 @@ impl Plugin for ConfigurationPlugin {
             cursor_visible: false,
             mode: WindowMode::Windowed,
             title: "Fishies".to_owned(),
-            ..Default::default()
+            ..default()
         };
 
         app.insert_resource(window_configuration)

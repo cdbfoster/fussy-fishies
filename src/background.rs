@@ -33,7 +33,7 @@ fn create_background(mut commands: Commands, asset_server: Res<AssetServer>) {
                 LOGICAL_HEIGHT as f32 / 2.0,
                 -1.0,
             )),
-            ..Default::default()
+            ..default()
         })
         .insert(RenderLayers::layer(1));
 }

@@ -47,7 +47,7 @@ pub(super) fn handle_shooting(
                     texture: asset_server.load("images/projectile.png"),
                     transform: (*transform).with_scale(Vec3::splat(0.2))
                         * Transform::from_translation(Vec3::new(0.0, 0.0, 1.0)),
-                    ..Default::default()
+                    ..default()
                 })
                 .insert(CollisionCircle { radius: 64.0 * 0.2 });
         }

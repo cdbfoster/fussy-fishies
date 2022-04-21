@@ -50,7 +50,7 @@ fn spawn_starting_orbs(mut commands: Commands, asset_server: Res<AssetServer>) {
                 transform: Transform::from_scale(Vec3::splat(ORB_SCALE))
                     .with_translation(Vec3::new(x, y, 0.0)),
                 visibility: Visibility { is_visible: false },
-                ..Default::default()
+                ..default()
             })
             .insert(CollisionCircle {
                 radius: 64.0 * ORB_SCALE,

@@ -59,7 +59,7 @@ fn setup(
                 LOGICAL_HEIGHT as f32 / 2.0,
                 0.0,
             )),
-            ..Default::default()
+            ..default()
         })
         .insert(RenderLayers::layer(1));
 

@@ -20,7 +20,7 @@ pub fn spawn_main_camera<'w, 's, 'a>(
         orthographic_projection: OrthographicProjection {
             window_origin: WindowOrigin::BottomLeft,
             scaling_mode: ScalingMode::None,
-            ..Default::default()
+            ..default()
         },
         transform: Transform::from_translation(Vec3::new(0.0, 0.0, 500.0))
             .looking_at(Vec3::ZERO, Vec3::Y),

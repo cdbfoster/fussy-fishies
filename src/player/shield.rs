@@ -30,9 +30,9 @@ pub(super) fn handle_shielding(
                                 .with_translation(Vec3::new(0.0, 0.0, 5.0)),
                             sprite: Sprite {
                                 color: Color::rgba(1.0, 1.0, 1.0, 0.1),
-                                ..Default::default()
+                                ..default()
                             },
-                            ..Default::default()
+                            ..default()
                         })
                         .insert(Shield);
                 });
