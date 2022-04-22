@@ -1,3 +1,4 @@
+use bevy::ecs::query::WorldQuery;
 use bevy::prelude::*;
 
 use crate::core_components::{
@@ -5,6 +6,7 @@ use crate::core_components::{
 };
 
 use super::input::Action;
+use super::model::BodyPart;
 use super::Player;
 
 pub(super) fn handle_shooting(
@@ -54,6 +56,17 @@ pub(super) fn handle_shooting(
     }
 }
 
+#[derive(WorldQuery)]
+#[world_query(mutable)]
+pub(super) struct HpEntityQuery<'w> {
+    entity: Entity,
+    hp: &'w mut HitPoints,
+    transform: &'w Transform,
+    collision: &'w CollisionCircle,
+    shielded: Option<&'w Shielded>,
+    children: Option<&'w Children>,
+}
+
 pub(super) fn handle_projectiles(
     mut commands: Commands,
     mut projectiles: Query<
@@ -66,48 +79,65 @@ pub(super) fn handle_projectiles(
         ),
         With<Projectile>,
     >,
-    mut hp_entities: Query<
-        (
-            Entity,
-            &mut HitPoints,
-            &Transform,
-            &CollisionCircle,
-            Option<&Shielded>,
-        ),
-        Without<Projectile>,
-    >,
+    mut hp_entities: Query<HpEntityQuery, Without<Projectile>>,
+    body_parts: Query<(Entity, &GlobalTransform), With<BodyPart>>,
 ) {
     for (_, mut transform, velocity, _, _) in projectiles.iter_mut() {
         transform.translation += velocity.0.extend(0.0);
     }
 
-    for (projectile, transform, _, originator, collision) in projectiles.iter() {
+    for (projectile, mut transform, _, originator, collision) in projectiles.iter_mut() {
         let hit = hp_entities
             .iter_mut()
-            .filter(|(p, _, _, _, _)| *p != originator.0)
-            .map(|(p, h, t, c, s)| {
-                (
-                    p,
-                    h,
-                    (transform.translation - t.translation).truncate().length()
-                        - c.radius
-                        - collision.radius,
-                    s,
-                )
+            .filter(|e| e.entity != originator.0)
+            .map(|e| {
+                let distance = (transform.translation - e.transform.translation)
+                    .truncate()
+                    .length()
+                    - e.collision.radius
+                    - collision.radius;
+
+                (e, distance)
             })
-            .min_by(|a, b| a.2.partial_cmp(&b.2).unwrap())
-            .filter(|a| a.2 <= 0.0)
-            .map(|a| (a.0, a.1, a.3));
+            .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap())
+            .filter(|a| a.1 <= 0.0)
+            .map(|(e, _)| e);
 
-        if let Some((hp_entity, mut hp, shielded)) = hit {
-            commands.entity(projectile).despawn();
+        if let Some(mut e) = hit {
+            if e.shielded.is_none() {
+                commands.entity(projectile).remove::<Projectile>();
 
-            if shielded.is_none() && hp.0 > 0 {
-                hp.0 -= 1;
-                println!("Player {:?} hp: {}", hp_entity, hp.0);
-                if hp.0 == 0 {
-                    commands.entity(hp_entity).insert(Dead);
+                let (parent_entity, parent_transform) = if let Some(children) = e.children {
+                    children
+                        .iter()
+                        .filter_map(|c| body_parts.get(*c).ok())
+                        .map(|(c, t)| (c, t, (t.translation - transform.translation).length()))
+                        .min_by(|a, b| a.2.partial_cmp(&b.2).unwrap())
+                        .map(|(c, t, _)| (c, (*t).into()))
+                        .unwrap_or((e.entity, e.transform.clone()))
+                } else {
+                    (e.entity, e.transform.clone())
+                };
+
+                let mut vector = transform.translation - parent_transform.translation;
+                vector = parent_transform.rotation.inverse() * vector;
+                vector *= 0.8 / parent_transform.scale;
+                vector.z += 3.0;
+
+                *transform = Transform::from_translation(vector)
+                    .with_scale(transform.scale / parent_transform.scale);
+
+                commands.entity(parent_entity).push_children(&[projectile]);
+
+                if e.hp.0 > 0 {
+                    e.hp.0 -= 1;
+                    println!("Player {:?} hp: {}", e.entity, e.hp.0);
+                    if e.hp.0 == 0 {
+                        commands.entity(e.entity).insert(Dead);
+                    }
                 }
+            } else {
+                commands.entity(projectile).despawn();
             }
         }
     }
