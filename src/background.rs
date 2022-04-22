@@ -58,22 +58,25 @@ struct Wobble {
     amplitude: f32,
 }
 
-fn spawn_bubble_group(commands: &mut Commands, asset_server: &Res<AssetServer>) {
+pub fn spawn_bubble_group(
+    commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+    g_pos: Vec3,
+    count: usize,
+    x_range: Range<f32>,
+    y_range: Range<f32>,
+    z_range: Range<f32>,
+) {
     let mut rng = thread_rng();
 
-    let gx = rng.gen_range(0.0..LOGICAL_WIDTH as f32);
-    let gy = -BUBBLE_Y_RANGE.end - BUBBLE_SIZE_RANGE.end / 2.0;
-    let gz = rng.gen_range(BUBBLE_GROUP_Z_RANGE);
-
-    let count = rng.gen_range(BUBBLE_GROUP_COUNT_RANGE);
     for _ in 0..count {
-        let ox = rng.gen_range(BUBBLE_X_RANGE);
-        let oy = rng.gen_range(BUBBLE_Y_RANGE);
-        let oz = rng.gen_range(BUBBLE_Z_RANGE);
+        let ox = rng.gen_range(x_range.clone());
+        let oy = rng.gen_range(y_range.clone());
+        let oz = rng.gen_range(z_range.clone());
 
         let size = rng.gen_range(BUBBLE_SIZE_RANGE) / 256.0;
 
-        let alpha = (11.0 + gz + oz) / 33.0 + 0.3;
+        let alpha = ((11.0 + g_pos.z + oz) / 33.0 + 0.3).min(1.0).max(0.0);
 
         commands
             .spawn_bundle(SpriteBundle {
@@ -82,8 +85,12 @@ fn spawn_bubble_group(commands: &mut Commands, asset_server: &Res<AssetServer>) 
                     ..default()
                 },
                 texture: asset_server.load("images/bubble-small.png"),
-                transform: Transform::from_translation(Vec3::new(gx + ox, gy + oy, gz + oz))
-                    .with_scale(Vec3::splat(size)),
+                transform: Transform::from_translation(Vec3::new(
+                    g_pos.x + ox,
+                    g_pos.y + oy,
+                    g_pos.z + oz,
+                ))
+                .with_scale(Vec3::splat(size)),
                 ..default()
             })
             .insert(Bubble)
@@ -103,7 +110,22 @@ fn spawn_bubbles(
     timer.0.tick(time.delta());
 
     if timer.0.finished() {
-        spawn_bubble_group(&mut commands, &asset_server);
+        let mut rng = thread_rng();
+
+        spawn_bubble_group(
+            &mut commands,
+            &asset_server,
+            Vec3::new(
+                rng.gen_range(0.0..LOGICAL_WIDTH as f32),
+                -BUBBLE_Y_RANGE.end - BUBBLE_SIZE_RANGE.end / 2.0,
+                rng.gen_range(BUBBLE_GROUP_Z_RANGE),
+            ),
+            rng.gen_range(BUBBLE_GROUP_COUNT_RANGE),
+            BUBBLE_X_RANGE,
+            BUBBLE_Y_RANGE,
+            BUBBLE_Z_RANGE,
+        );
+
         timer.0 = Timer::from_seconds(thread_rng().gen_range(BUBBLE_GROUP_TIMER_RANGE), false);
     }
 }

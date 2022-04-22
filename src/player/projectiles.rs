@@ -1,6 +1,7 @@
 use bevy::ecs::query::WorldQuery;
 use bevy::prelude::*;
 
+use crate::background::spawn_bubble_group;
 use crate::core_components::{
     CollisionCircle, Dead, Energy, HitPoints, Originator, Projectile, Shielded, Velocity,
 };
@@ -69,6 +70,7 @@ pub(super) struct HpEntityQuery<'w> {
 
 pub(super) fn handle_projectiles(
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
     mut projectiles: Query<
         (
             Entity,
@@ -138,6 +140,15 @@ pub(super) fn handle_projectiles(
                 }
             } else {
                 commands.entity(projectile).despawn();
+                spawn_bubble_group(
+                    &mut commands,
+                    &asset_server,
+                    transform.translation,
+                    3,
+                    -10.0..10.0,
+                    -10.0..10.0,
+                    0.0..0.001,
+                );
             }
         }
     }

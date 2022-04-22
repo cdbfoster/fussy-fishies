@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy::render::view::RenderLayers;
 
 use crate::animation::{Animation, AnimationStage};
+use crate::background::spawn_bubble_group;
 use crate::configuration::{LOGICAL_HEIGHT, LOGICAL_WIDTH};
 use crate::core_components::{Dead, HitPoints};
 use crate::player::PlayerConfiguration;
@@ -56,6 +57,8 @@ const BIG_FISH_LAYER: RenderLayers = RenderLayers::layer(2);
 const START_DEPTH: f32 = -20.0;
 const START_SCALE: f32 = 1.0;
 
+const ATTENTION_OFFSET: f32 = 200.0;
+
 #[derive(Component)]
 struct BigFish;
 
@@ -77,7 +80,6 @@ fn update_attention_target(
             .expect("could not find eat target");
 
         attention_target.0 = transform.translation;
-        attention_target.0.y += 200.0;
         attention_target.0.z = -0.1;
 
         return;
@@ -124,7 +126,7 @@ fn follow_attention_target(
 
     let scale = get_fish_space_scale();
 
-    let target = attention_target.0 * scale;
+    let target = (attention_target.0 + Vec3::Y * ATTENTION_OFFSET) * scale;
     let pos = transform.translation * scale;
 
     let distance = target - pos;
@@ -150,6 +152,7 @@ fn eat_dead_things(
     mut commands: Commands,
     mut animation_state: ResMut<AnimationState>,
     mut eat_list: ResMut<EatList>,
+    asset_server: Res<AssetServer>,
     attention_target: Res<AttentionTarget>,
     time: Res<Time>,
     mut hideables: Query<&mut Visibility>,
@@ -161,7 +164,7 @@ fn eat_dead_things(
 
         let scale = get_fish_space_scale();
 
-        let target = attention_target.0 * scale;
+        let target = (attention_target.0 + Vec3::Y * ATTENTION_OFFSET) * scale;
         let pos = transform.translation * scale;
 
         let distance = target - pos;
@@ -209,6 +212,16 @@ fn eat_dead_things(
                 animation_state.chomping.reset();
                 commands.entity(*eat_target).despawn_recursive();
                 eat_list.0.remove(0);
+
+                spawn_bubble_group(
+                    &mut commands,
+                    &asset_server,
+                    attention_target.0,
+                    10,
+                    -50.0..50.0,
+                    -50.0..50.0,
+                    0.0..0.0001,
+                );
             }
         }
     }

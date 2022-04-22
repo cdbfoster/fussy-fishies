@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+use crate::background::spawn_bubble_group;
 use crate::core_components::{Energy, Shield, Shielded};
 
 use super::input::Action;
@@ -12,12 +13,21 @@ pub(super) fn handle_shielding(
     time: Res<Time>,
     actions: Res<Input<Action>>,
     asset_server: Res<AssetServer>,
-    mut players: Query<(Entity, &mut Energy, &Children, Option<&Shielded>), With<Player>>,
+    mut players: Query<
+        (
+            Entity,
+            &mut Energy,
+            &Transform,
+            &Children,
+            Option<&Shielded>,
+        ),
+        With<Player>,
+    >,
     shields: Query<(), With<Shield>>,
 ) {
     const SHIELD_DRAIN_RATE: f32 = 2.0;
 
-    for (player, mut energy, children, shielded) in players.iter_mut() {
+    for (player, mut energy, transform, children, shielded) in players.iter_mut() {
         if actions.just_pressed(Action::Shield(player)) && energy.0 > 0.0 {
             commands
                 .entity(player)
@@ -56,6 +66,18 @@ pub(super) fn handle_shielding(
                 .expect("cannot find shield entity");
 
             commands.entity(shield).despawn_recursive();
+
+            let range = (-128.0 * transform.scale.z)..(128.0 * transform.scale.z);
+
+            spawn_bubble_group(
+                &mut commands,
+                &asset_server,
+                transform.translation,
+                5,
+                range.clone(),
+                range,
+                5.0..5.0001,
+            );
         }
     }
 }
