@@ -23,7 +23,7 @@ pub(super) fn handle_shielding(
         ),
         With<Player>,
     >,
-    shields: Query<(), With<Shield>>,
+    mut shields: Query<(&mut Transform, &Parent), (With<Shield>, Without<Player>)>,
 ) {
     const SHIELD_DRAIN_RATE: f32 = 2.0;
 
@@ -35,11 +35,11 @@ pub(super) fn handle_shielding(
                 .with_children(|player| {
                     player
                         .spawn_bundle(SpriteBundle {
-                            texture: asset_server.load("images/shield.png"),
+                            texture: asset_server.load("images/bubble.png"),
                             transform: Transform::from_scale(Vec3::splat(PLAYER_SHIELD_SCALE))
                                 .with_translation(Vec3::new(0.0, 0.0, 5.0)),
                             sprite: Sprite {
-                                color: Color::rgba(1.0, 1.0, 1.0, 0.1),
+                                color: Color::rgba(1.0, 1.0, 1.0, 0.8),
                                 ..default()
                             },
                             ..default()
@@ -78,6 +78,10 @@ pub(super) fn handle_shielding(
                 range,
                 5.0..5.0001,
             );
+        }
+
+        if let Some((mut shield_transform, _)) = shields.iter_mut().find(|(_, p)| ***p == player) {
+            shield_transform.rotation = transform.rotation.inverse();
         }
     }
 }
